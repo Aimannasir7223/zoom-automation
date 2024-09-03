@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zoom Spotlight Control</title>
+
+    <!-- Include lodash library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.21/lodash.min.js"></script>
+
+    <!-- Include Socket.IO -->
+    <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
+
+    <!-- Zoom Web SDK -->
+    <script src="https://source.zoom.us/2.1.1/lib/vendor/react.min.js"></script>
+    <script src="https://source.zoom.us/2.1.1/lib/vendor/react-dom.min.js"></script>
+    <script src="https://source.zoom.us/2.1.1/lib/vendor/redux.min.js"></script>
+    <script src="https://source.zoom.us/2.1.1/lib/vendor/redux-thunk.min.js"></script>
+    <script src="https://source.zoom.us/2.1.1/zoom-meeting-2.1.1.min.js"></script>
+
+    <script>
+        console.log("Initializing Zoom SDK...");
+        ZoomMtg.setZoomJSLib('https://source.zoom.us/2.1.1/lib', '/av');
+        ZoomMtg.preLoadWasm();
+        ZoomMtg.prepareJssdk();
+        console.log("Zoom SDK Initialized");
+    </script>
+</head>
+<body>
+    <h1>Zoom Spotlight Control</h1>
+    <div id="zmmtg-root"></div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log("DOM fully loaded and parsed");
+            const socket = io.connect();
+
+            socket.on('connect', () => {
+                console.log('Connected to the WebSocket server');
+            });
+            socket.on('update',function(data){
+                console.log('Received count data',data);   
+            }
+
+            )
+            // Receive the spotlight command from the server
+            socket.on('spotlight', function(data) {
+                console.log("Received spotlight data:", data);
+
+                ZoomMtg.init({
+                    leaveUrl: 'http://localhost:3000/',
+                    isSupportAV: true,
+                    success: function () {
+                        console.log("Zoom init successful");
+
+                        ZoomMtg.join({
+                            meetingNumber: data.meetingNumber,
+                            userName: 'Spotlight Controller',
+                            signature: data.signature,
+                            apiKey: data.apiKey,
+                            passWord: data.password,
+                            success: function () {
+                                console.log("Zoom join successful");
+
+                                ZoomMtg.spotlightVideo({
+                                    userId: data.userId,
+                                    success: function () {
+                                        console.log('Spotlight success');
+                                    },
+                                    error: function (err) {
+                                        console.error('Spotlight error', err);
+                                    }
+                                });
+                            },
+                            error: function (err) {
+                                console.error('Join error', err);
+                            }
+                        });
+                    },
+                    error: function (err) {
+                        console.error('Init error', err);
+                    }
+                });
+            });
+
+            socket.on('connect_error', (err) => {
+                console.error('WebSocket connection error:', err);
+            });
+
+            socket.on('disconnect', () => {
+                console.log('Disconnected from WebSocket server');
+            });
+        });
+    </script>
+</body>
+</html>
