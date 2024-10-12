@@ -46,7 +46,7 @@ const listParticipantsCameras = async (req,res) => {
 const handleWebhookEvent =async (req, res) => {
     const event = req.body.event;
     const meetingId = req.body.payload.object.id;
-    
+
     switch(event) {
         case 'meeting.participant_joined':
             participantCount++;
@@ -57,8 +57,8 @@ const handleWebhookEvent =async (req, res) => {
         default:
             break;
     }
-    updateParticipantStatus(meetingId);
-    res.sendStatus(200);
+    await updateParticipantStatus(meetingId);
+    return res.sendStatus(200);
 };
 const updateParticipantStatus = async (meetingId) => {
     const response = await commonService.getParticipantsList(meetingId);
@@ -72,9 +72,19 @@ const updateParticipantStatus = async (meetingId) => {
         handRaiseCount
     });
 };
+const getAuthAccess=async(req,res)=>{
+    const accessToken = await commonService.getAccessToken();
+    const zakToken= await commonService.getZakToken();
+    const data={
+        accessToken:accessToken,
+        zakToken:zakToken
+    }
+    return res.status(200).json({data:data});
+}
 module.exports = {
     getMeetingDetails,
     listParticipants,
     listParticipantsCameras,
-    handleWebhookEvent 
+    handleWebhookEvent,
+    getAuthAccess 
 };

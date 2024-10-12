@@ -60,10 +60,21 @@ const getWebinarParticipantsList= async (webinarId)=>{
     });
 }
 
+const getZakToken=async ()=>{
+    const accessToken = await getAccessToken();
+    const response= await axios.get(`${process.env.ZOOM_API_URL}/users/me/token?type=zak`, {
+        headers: {
+            'Authorization': `Bearer ${accessToken}`,
+            'Content-Type': 'application/json',
+        },
+    });
+    return response.data.token;
+}
 
 module.exports={
     generateSignature,
     getAccessToken,
     getParticipantsList,
-    getWebinarParticipantsList
+    getWebinarParticipantsList,
+    getZakToken
 }
