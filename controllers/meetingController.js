@@ -81,10 +81,15 @@ const getAuthAccess=async(req,res)=>{
     }
     return res.status(200).json({data:data});
 }
+const getMeetingSdkSignature=async(req,res)=>{
+    const response=await commonService.getMeetingSdkSignature(req.body);
+    return res.status(200).json(response);
+}
 module.exports = {
     getMeetingDetails,
     listParticipants,
     listParticipantsCameras,
     handleWebhookEvent,
-    getAuthAccess 
+    getAuthAccess,
+    getMeetingSdkSignature
 };

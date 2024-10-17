@@ -1,4 +1,5 @@
 const axios = require('axios');
+const {KJUR} =require('jsrsasign')
 require('dotenv').config();
 
 const getAccessToken = async () => {
@@ -36,8 +37,6 @@ const generateSignature= async (meetingNumber) =>{
     };
     const sHeader = JSON.stringify(oHeader);
     const sPayload = JSON.stringify(oPayload);
-    
-    // Ensure you use the correct secret key (e.g., ZOOM_CLIENT_SECRET) for signing the JWT
     return KJUR.jws.JWS.sign('HS256', sHeader, sPayload, process.env.ZOOM_CLIENT_SECRET);
 }
 
@@ -71,10 +70,33 @@ const getZakToken=async ()=>{
     return response.data.token;
 }
 
+const getMeetingSdkSignature=async(body)=>{
+    const { meetingNumber, role, expirationSeconds } = body
+    const iat = Math.floor(Date.now() / 1000)
+    const exp = expirationSeconds ? iat + expirationSeconds : iat + 60 * 60 * 2
+    const oHeader = { alg: 'HS256', typ: 'JWT' }
+  
+    const oPayload = {
+      appKey: process.env.ZOOM_CLIENT_ID,
+      sdkKey: process.env.ZOOM_CLIENT_ID,
+      mn: meetingNumber,
+      role,
+      iat,
+      exp,
+      tokenExp: exp
+    }
+  
+    const sHeader = JSON.stringify(oHeader)
+    const sPayload = JSON.stringify(oPayload)
+    const sdkJWT = KJUR.jws.JWS.sign('HS256', sHeader, sPayload, process.env.ZOOM_CLIENT_SECRET)
+    return {signature: sdkJWT };
+}
+
 module.exports={
     generateSignature,
     getAccessToken,
     getParticipantsList,
     getWebinarParticipantsList,
-    getZakToken
+    getZakToken,
+    getMeetingSdkSignature
 }
